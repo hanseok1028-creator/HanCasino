@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Baccarat Play & Score</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#071018;color:#fff;font-family:Arial,"Noto Sans KR",sans-serif}
+.wrap{max-width:1100px;margin:auto;padding:18px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.logo{font-size:28px;font-weight:800;letter-spacing:2px}.score{border:1px solid #777;border-radius:14px;padding:10px 18px;background:#111b24;font-size:18px}
+.score b{font-size:24px}.table{margin-top:18px;background:#07553d;border:8px solid #21150f;border-radius:30px;padding:25px;box-shadow:0 15px 40px #0008}
+.hands{display:grid;grid-template-columns:1fr 1fr;gap:30px}.side{text-align:center}.side h2{margin:0 0 12px}.cards{min-height:160px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+.card{width:92px;height:130px;background:#fff;color:#111;border-radius:10px;display:flex;flex-direction:column;justify-content:space-between;padding:10px;font-size:25px;font-weight:bold;box-shadow:0 5px 10px #0005}
+.red{color:#d71920}.center{text-align:center;margin:12px}.result{font-size:24px;font-weight:bold;min-height:34px}
+.controls{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:20px}
+button{border:0;border-radius:12px;padding:14px 20px;font-weight:800;font-size:16px;cursor:pointer;background:#e6b84b;color:#15100a}
+button.secondary{background:#253442;color:#fff}.predict button.active{outline:3px solid #fff}
+.panel{margin-top:18px;background:#111b24;border-radius:16px;padding:18px}.history{display:flex;gap:7px;flex-wrap:wrap}
+.dot{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:bold}.p{background:#1677e8}.b{background:#d9344a}.t{background:#19a66a}
+.settings{display:none;margin-top:14px;padding:15px;background:#18232d;border-radius:14px}.settings.show{display:block}.addrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.notice{font-size:13px;color:#b9c5cf;margin-top:10px}
+@media(max-width:650px){.hands{gap:10px}.card{width:70px;height:100px;font-size:20px}.logo{font-size:20px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="logo">♠ BACCARAT <small style="font-size:11px">PLAY & SCORE</small></div>
+    <div class="score">⭐ 내 점수 <b id="score">1000</b></div>
+  </div>
+
+  <div class="table">
+    <div class="hands">
+      <div class="side"><h2>PLAYER <span id="ps">-</span></h2><div id="player" class="cards"></div></div>
+      <div class="side"><h2>BANKER <span id="bs">-</span></h2><div id="banker" class="cards"></div></div>
+    </div>
+    <div class="center"><div id="result" class="result">게임을 시작하세요</div></div>
+  </div>
+
+  <div class="controls">
+    <button id="deal">새 게임</button>
+    <button class="secondary" id="settingsBtn">⚙ 설정</button>
+  </div>
+
+  <div class="panel">
+    <b>결과 예측</b>
+    <div class="predict controls" style="margin-top:10px">
+      <button data-pick="P">플레이어</button>
+      <button data-pick="T">무승부</button>
+      <button data-pick="B">뱅커</button>
+    </div>
+    <div class="notice">예측은 점수를 걸지 않습니다. 맞히면 게임 점수만 획득합니다.</div>
+  </div>
+
+  <div id="settings" class="settings">
+    <b>점수 설정</b>
+    <div class="notice">환전·현금화 기능이 없는 게임 점수입니다. 점수가 0일 때만 추가할 수 있습니다.</div>
+    <div class="addrow">
+      <button class="add" data-add="100000">+ 10만점</button>
+      <button class="add" data-add="1000000">+ 100만점</button>
+      <button class="add" data-add="10000000">+ 1,000만점</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <b>결과 기록</b>
+    <div id="history" class="history" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<script>
+const suits=["♠","♥","♦","♣"], ranks=["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+let score=1000, prediction=null, history=[];
+const $=id=>document.getElementById(id);
+function cardValue(r){return ["10","J","Q","K"].includes(r)?0:r==="A"?1:Number(r)}
+function makeDeck(){let d=[];for(const s of suits)for(const r of ranks)d.push({s,r,v:cardValue(r)});return d.sort(()=>Math.random()-.5)}
+function draw(d){return d.pop()}
+function total(cards){return cards.reduce((a,c)=>a+c.v,0)%10}
+function renderCards(id,cards){$(id).innerHTML=cards.map(c=>`<div class="card ${["♥","♦"].includes(c.s)?"red":""}"><span>${c.r}</span><span>${c.s}</span></div>`).join("")}
+function play(){
+  prediction=null; document.querySelectorAll(".predict button").forEach(x=>x.classList.remove("active"));
+  const d=makeDeck(),p=[draw(d),draw(d)],b=[draw(d),draw(d)];
+  let ps=total(p),bs=total(b);
+  if(ps<8 && bs<8){ if(ps<=5)p.push(draw(d)); if(b.length===2 && bs<=5)b.push(draw(d)); }
+  ps=total(p);bs=total(b);
+  renderCards("player",p);renderCards("banker",b);$("ps").textContent=ps;$("bs").textContent=bs;
+  const winner=ps>bs?"P":bs>ps?"B":"T";
+  history.unshift(winner);history=history.slice(0,30);
+  $("result").textContent=winner==="P"?"플레이어 승리":winner==="B"?"뱅커 승리":"무승부";
+  $("history").innerHTML=history.map(x=>`<span class="dot ${x==="P"?"p":x==="B"?"b":"t"}">${x}</span>`).join("");
+  window.currentWinner=winner;
+}
+document.querySelectorAll(".predict button").forEach(btn=>btn.onclick=()=>{
+  document.querySelectorAll(".predict button").forEach(x=>x.classList.remove("active"));
+  btn.classList.add("active");prediction=btn.dataset.pick;
+});
+$("deal").onclick=()=>{
+  play();
+  if(prediction===window.currentWinner){
+    score+=100; $("result").textContent+="  · 예측 성공 +100점";
+  } else if(prediction){
+    $("result").textContent+="  · 예측 결과와 다릅니다";
+  }
+  $("score").textContent=score.toLocaleString();
+};
+$("settingsBtn").onclick=()=>$("settings").classList.toggle("show");
+document.querySelectorAll(".add").forEach(btn=>btn.onclick=()=>{
+  if(score!==0){alert("점수가 0점일 때만 추가할 수 있습니다.");return}
+  score=Number(btn.dataset.add);$("score").textContent=score.toLocaleString();
+});
+play();
+</script>
+</body>
+</html>
